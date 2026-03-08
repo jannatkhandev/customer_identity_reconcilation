@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum LinkPrecedence {
+  primary
+  secondary
+}
+
+model Contact {
+  id             Int            @id @default(autoincrement())
+  phoneNumber    String?
+  email          String?
+  linkedId       Int?           // points to the primary contact's id (null if this is primary)
+  linkPrecedence LinkPrecedence @default(primary)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  // self-referential relation: a secondary contact links back to its primary
+  linkedContact  Contact?  @relation("ContactLink", fields: [linkedId], references: [id])
+  linkedContacts Contact[] @relation("ContactLink")
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([linkedId])
+}
